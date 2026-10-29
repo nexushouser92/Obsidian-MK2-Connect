@@ -1,5 +1,5 @@
 # Tests and builds the MK2 Activator on every push and pull request.
-# Pushing a tag like v1.0.1 also publishes a GitHub Release with the .exe and its SHA-256.
+# Version tags publish only the macOS package; Windows remains an internal build artifact.
 name: Build
 
 on:
@@ -12,6 +12,41 @@ permissions:
   contents: write
 
 jobs:
+  test-macos:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Run tests
+        run: python -m unittest discover -s tests -v
+
+      - name: Build MK2 Activator.app
+        run: |
+          ./build_mac_app.sh
+          ditto -c -k --keepParent "dist/MK2 Activator.app" "dist/MK2.Activator.mac.zip"
+
+      - uses: actions/upload-artifact@v5
+        with:
+          name: MK2-Activator-mac
+          path: dist/MK2.Activator.mac.zip
+
+      - name: Publish macOS release
+        if: startsWith(github.ref, 'refs/tags/v')
+        run: shasum -a 256 dist/MK2.Activator.mac.zip > dist/SHA256-mac.txt
+
+      - name: Attach macOS release files
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            dist/MK2.Activator.mac.zip
+            dist/SHA256-mac.txt
+          generate_release_notes: true
+
   build:
     runs-on: windows-latest
     steps:
@@ -44,13 +79,3 @@ jobs:
             dist/MK2 Activator.exe
             dist/SHA256.txt
             dist/README.txt
-
-      - name: Publish release
-        if: startsWith(github.ref, 'refs/tags/v')
-        uses: softprops/action-gh-release@v2
-        with:
-          files: |
-            dist/MK2 Activator.exe
-            dist/SHA256.txt
-            dist/README.txt
-          generate_release_notes: true

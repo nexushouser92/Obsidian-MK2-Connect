@@ -7,7 +7,10 @@ from unittest import mock
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from mk2_patcher import write_atomic
+try:
+    from mk2_patcher import write_atomic
+except ImportError:  # winreg only exists on Windows
+    raise unittest.SkipTest("mk2_patcher is Windows only")
 
 
 class WriteAtomicTests(unittest.TestCase):
