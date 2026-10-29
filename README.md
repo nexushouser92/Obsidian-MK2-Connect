@@ -1,6 +1,6 @@
 # Obsidian MK2 Connect
 
-![Obsidian MK2 Connect](assets/obsidian-mk2-connect.png)
+![Obsidian MK2 Connect](assets/obsidian-mk2-connect.jpg)
 
 Connect your MK2 controller on macOS and Windows.
 
