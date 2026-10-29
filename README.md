@@ -13,7 +13,7 @@ This is an unofficial project. You need an installed and activated copy of the c
 
 1. Download the macOS ZIP from [Releases](../../releases) and extract it.
 2. Close the music software and open **MK2 Activator**.
-3. Click **Enable MK2** and enter your Mac administrator password.
+3. Click **Activate MK2** and enter your Mac administrator password.
 4. Connect your MK2 and open the music software.
 
 To undo the change, close the music software and select **Restore original**. If the activator cannot find a matching backup, repair the software using your software provider’s installer.

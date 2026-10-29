@@ -15,6 +15,7 @@ lipo -create build/mac/MK2-x86_64 build/mac/MK2-arm64 -output "$APP/Contents/Mac
 
 cp mac/Info.plist "$APP/Contents/Info.plist"
 cp assets/obsidian-icon.icns "$APP/Contents/Resources/obsidian-icon.icns"
+cp assets/obsidian-logo.png assets/Inter-Regular.ttf assets/Inter-SemiBold.ttf assets/Inter-OFL.txt "$APP/Contents/Resources/"
 cp mk2_patcher_mac.py patch_mk2_mac.py "$APP/Contents/Resources/"
 codesign --force --sign - "$APP"
 
