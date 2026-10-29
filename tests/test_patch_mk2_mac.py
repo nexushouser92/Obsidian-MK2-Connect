@@ -1,4 +1,4 @@
-"""Tests for patch_mk2_mac.py and mk2_patcher_mac.py on small synthetic Mach-O files: no Native Instruments binary needed.
+"""Tests for patch_mk2_mac.py and mk2_patcher_mac.py on small synthetic Mach-O files: no vendor binary needed.
 
 Run with: python -m unittest discover -s tests
 """
@@ -225,7 +225,7 @@ class ApplyTests(unittest.TestCase):
 
 
 class ActivatorTests(unittest.TestCase):
-    """enable/restore of mk2_patcher_mac on a fake Maschine 3.app (no codesign, no real process check)."""
+    """enable/restore of mk2_patcher_mac on a fake application (no codesign, no real process check)."""
 
     def setUp(self):
         self.dir = tempfile.TemporaryDirectory()

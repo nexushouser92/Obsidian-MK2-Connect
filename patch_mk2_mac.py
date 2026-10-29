@@ -1,4 +1,4 @@
-"""MK2 patch for Maschine 3 on macOS: same idea as patch_mk2.py, for the Mach-O binary.
+"""MK2 patch for music software on macOS: same idea as patch_mk2.py, for the Mach-O binary.
 
 HardwareInterface::startDeviceSubscriptions() calls the Jam's subscribeToDevice() on the Jam object, which
 subscribes to PID 0x1500. This patch makes that one call work on the MK2 object (the Jam object + a fixed
@@ -10,7 +10,7 @@ distance) and subscribe to PID 0x1140 instead. Two edits per architecture:
              mov w1,#0x1500              Jam PID    -> MK2 PID           (inside subscribeToDevice)
 
 Nothing is hard-coded per version: the Jam and MK2 objects are located through the symbol table (the vtables of
-ControllerSubscription<MaschineJam> / <MaschineMK2> and the Jam subscribeToDevice), and the offsets are read from the
+controller subscription types and the Jam subscribeToDevice), and the offsets are read from the
 constructor that stores those vtables. If anything does not match exactly, the file is reported as unsupported.
 
 Usage:
@@ -308,7 +308,7 @@ def apply(data, patches, revert):
 
 
 def apply_in_place(path, patches, revert):
-    """Same as apply() but writes only the patched bytes into the file (the Maschine 3 binary is ~500 MB)."""
+    """Same as apply() but writes only the patched bytes into the file (the music software binary is ~500 MB)."""
     with open(path, "r+b") as f:
         for off, orig, new, _ in patches:
             expect = new if revert else orig
@@ -341,7 +341,7 @@ def main():
     out, log = apply(data, patches, revert)
     if out is None:
         sys.exit(f"ABORTED {log}")
-    print(f"Maschine 3 ({', '.join(archs)})")
+    print(f"music software ({', '.join(archs)})")
     print("\n".join(log))
     with open(dst, "wb") as f:
         f.write(out)

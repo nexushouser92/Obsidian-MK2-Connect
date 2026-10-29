@@ -1,11 +1,11 @@
-// MK2 Activator for Maschine 3 on macOS: a native window over mk2_patcher_mac.py, like the Windows one.
+// Obsidian MK2 Connect on macOS: a native window over mk2_patcher_mac.py, like the Windows one.
 //
-// Finds Maschine 3.app, tells whether it is original or patched, and enables the MK2 or restores the original.
+// Finds compatible application, tells whether it is original or patched, and enables the MK2 or restores the original.
 // Checking needs no password; Enable and Restore ask for it with the standard macOS dialog.
 // Build it with ./build_mac_app.sh (needs the Xcode Command Line Tools).
 import Cocoa
 
-let jamWarning = "!!! WARNING: MASCHINE JAM WILL STOP WORKING IN MASCHINE 3 WHILE THE MK2 IS ENABLED !!!"
+let jamWarning = "!!! WARNING: JAM CONTROLLER WILL STOP WORKING IN THE MUSIC SOFTWARE WHILE THE MK2 IS ENABLED !!!"
 let defaultApp = "/Applications/Native Instruments/Maschine 3/Maschine 3.app"
 let python = "/usr/bin/python3"
 let toolPath = (Bundle.main.resourcePath ?? ".") + "/mk2_patcher_mac.py"
@@ -63,7 +63,7 @@ func cleanError(_ s: String) -> String {
     return t
 }
 
-func maschineIsRunning() -> Bool {
+func softwareIsRunning() -> Bool {
     run("/usr/bin/pgrep", ["-x", "Maschine 3"]).code == 0
 }
 
@@ -97,9 +97,9 @@ final class Controller: NSObject, NSApplicationDelegate {
     }
 
     func buildWindow() {
-        let title = NSTextField(labelWithString: "MK2 Activator for Maschine 3")
+        let title = NSTextField(labelWithString: "Obsidian MK2 Connect")
         title.font = .boldSystemFont(ofSize: 18)
-        let subtitle = NSTextField(labelWithString: "Close Maschine 3 before continuing.")
+        let subtitle = NSTextField(labelWithString: "Close the music software before continuing.")
         subtitle.textColor = .secondaryLabelColor
         let warning = NSTextField(wrappingLabelWithString: jamWarning)
         warning.font = .boldSystemFont(ofSize: 13)
@@ -136,7 +136,7 @@ final class Controller: NSObject, NSApplicationDelegate {
 
         window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 480, height: 260),
                           styleMask: [.titled, .closable, .miniaturizable], backing: .buffered, defer: false)
-        window.title = "MK2 Activator for Maschine 3"
+        window.title = "Obsidian MK2 Connect"
         window.contentView = stack
         window.isReleasedWhenClosed = false
         fit()
@@ -176,7 +176,7 @@ final class Controller: NSObject, NSApplicationDelegate {
 
     func refresh() {
         state = "unsupported"
-        busy("Checking Maschine 3… (takes a few seconds)")
+        busy("Checking music software… (takes a few seconds)")
         let app = appPath
         DispatchQueue.global().async {
             let result = tool(["status", "--porcelain", "--app", app])
@@ -209,14 +209,14 @@ final class Controller: NSObject, NSApplicationDelegate {
 
     @objc func choosePressed() {
         let panel = NSOpenPanel()
-        panel.title = "Locate Maschine 3.app"
+        panel.title = "Locate compatible application"
         panel.canChooseFiles = true
         panel.canChooseDirectories = false
         panel.allowedFileTypes = ["app"]
         panel.directoryURL = URL(fileURLWithPath: "/Applications")
         guard panel.runModal() == .OK, let url = panel.url else { return }
         if !FileManager.default.fileExists(atPath: url.path + "/Contents/MacOS/Maschine 3") {
-            alert("Not Maschine 3", "That app is not Maschine 3.", style: .warning)
+            alert("Unsupported app", "Please select a compatible application.", style: .warning)
             return
         }
         appPath = url.path
@@ -224,8 +224,8 @@ final class Controller: NSObject, NSApplicationDelegate {
     }
 
     @objc func actionPressed() {
-        if maschineIsRunning() {
-            alert("Maschine 3 is open", "Close Maschine 3 and press the button again.", style: .warning)
+        if softwareIsRunning() {
+            alert("Music software is open", "Close the music software and press the button again.", style: .warning)
             return
         }
         let revert = state == "patched"
@@ -249,10 +249,10 @@ final class Controller: NSObject, NSApplicationDelegate {
     func finished(_ revert: Bool, _ result: Output) {
         if result.code == 0 {
             if revert {
-                alert("Done", "Maschine 3 is back to its factory state. The Maschine Jam works again.")
+                alert("Done", "The music software is back to its factory state. The Jam controller works again.")
             } else {
-                alert("Done", "MK2 enabled. Connect the MK2 and open Maschine 3.\n\n"
-                    + "If Native Access updates Maschine 3, you will need to enable it again.")
+                alert("Done", "MK2 enabled. Connect the MK2 and open the music software.\n\n"
+                    + "If your software provider’s installer updates music software, you will need to enable it again.")
             }
         } else if !result.err.contains("(-128)") {      // -128: the user cancelled the password dialog
             let message = cleanError(result.err)

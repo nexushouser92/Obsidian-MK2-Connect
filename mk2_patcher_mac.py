@@ -1,15 +1,15 @@
-"""MK2 Activator for Maschine 3 on macOS: a command-line front end over patch_mk2_mac.py.
+"""MK2 Activator for music software on macOS: a command-line front end over patch_mk2_mac.py.
 
-Finds Maschine 3.app, tells whether it is original or patched, and enables the MK2 or restores the original.
+Finds compatible application, tells whether it is original or patched, and enables the MK2 or restores the original.
 Only touches the binary where identify() in patch_mk2_mac.py finds the Jam block. Before the first change it keeps a copy
 of the original binary and its _CodeSignature in /Library/Application Support/MK2 Activator, and after patching it
 signs the app ad hoc (the original signature no longer matches the changed bytes).
 
 Usage:
-    python3 mk2_patcher_mac.py status                  say what state Maschine 3 is in (no changes)
+    python3 mk2_patcher_mac.py status                  say what state music software is in (no changes)
     sudo python3 mk2_patcher_mac.py enable             enable the MK2
     sudo python3 mk2_patcher_mac.py restore            go back to the original
-Options: --app PATH (default /Applications/Native Instruments/Maschine 3/Maschine 3.app), --yes (skip the question).
+Options: --app PATH (choose the application), --yes (skip the question).
 """
 import mmap
 import hashlib
@@ -25,7 +25,7 @@ from patch_mk2_mac import analyze, apply_in_place
 DEFAULT_APP = "/Applications/Native Instruments/Maschine 3/Maschine 3.app"
 BACKUP_DIR = "/Library/Application Support/MK2 Activator"
 PROCESS_NAME = "Maschine 3"
-JAM_WARNING = "!!! WARNING: MASCHINE JAM WILL STOP WORKING IN MASCHINE 3 WHILE THE MK2 IS ENABLED !!!"
+JAM_WARNING = "!!! WARNING: JAM CONTROLLER WILL STOP WORKING IN THE MUSIC SOFTWARE WHILE THE MK2 IS ENABLED !!!"
 
 
 class Abort(Exception):
@@ -44,7 +44,7 @@ def bundle_version(app):
         return "?"
 
 
-def maschine_running():
+def software_running():
     return subprocess.run(["pgrep", "-x", PROCESS_NAME], capture_output=True).returncode == 0
 
 
@@ -52,12 +52,12 @@ def read_state(app):
     """(state, architectures, patches, problems) for the app's binary; raises Abort if it cannot be read."""
     path = exe_path(app)
     if not os.path.isfile(path):
-        raise Abort(f"Maschine 3 was not found at {app}. Use --app to point to Maschine 3.app.")
+        raise Abort(f"The music software was not found at {app}. Use --app to point to the compatible application.")
     try:
         with open(path, "rb") as f, mmap.mmap(f.fileno(), 0, access=mmap.ACCESS_READ) as data:
             return analyze(data)
     except OSError as e:
-        raise Abort(f"Could not read Maschine 3: {e.strerror}")
+        raise Abort(f"Could not read music software: {e.strerror}")
 
 
 def sign(app):
@@ -121,20 +121,20 @@ def describe(app):
     state, archs, _, problems = read_state(app)
     version = bundle_version(app)
     if state == "original":
-        return state, f"Maschine {version} ({', '.join(archs)}) original. The MK2 is not enabled yet."
+        return state, f"Music software {version} ({', '.join(archs)}) original. The MK2 is not enabled yet."
     if state == "patched":
-        return state, f"Maschine {version} ({', '.join(archs)}) with the MK2 enabled."
-    return None, ("This Maschine 3 cannot be patched safely: the expected code was not found. Nothing was changed.\n  "
+        return state, f"Music software {version} ({', '.join(archs)}) with the MK2 enabled."
+    return None, ("This music software cannot be patched safely: the expected code was not found. Nothing was changed.\n  "
                   + "\n  ".join(problems))
 
 
-def enable(app, backup_dir=BACKUP_DIR, running=maschine_running, sign_app=sign):
+def enable(app, backup_dir=BACKUP_DIR, running=software_running, sign_app=sign):
     state, archs, patches, problems = read_state(app)
     if state != "original":
-        raise Abort("Maschine 3 is already patched." if state == "patched" else
-                    "This Maschine 3 cannot be patched safely. Nothing was changed.\n  " + "\n  ".join(problems))
+        raise Abort("The music software is already patched." if state == "patched" else
+                    "This music software cannot be patched safely. Nothing was changed.\n  " + "\n  ".join(problems))
     if running():
-        raise Abort("Maschine 3 is open. Close it and run this again.")
+        raise Abort("The music software is open. Close it and run this again.")
     save_backup(app, backup_dir)
     try:
         apply_in_place(exe_path(app), patches, revert=False)
@@ -149,32 +149,32 @@ def enable(app, backup_dir=BACKUP_DIR, running=maschine_running, sign_app=sign):
             json.dump(meta, f)
     except (Abort, OSError, ValueError) as e:
         load_backup(app, backup_dir)
-        raise Abort(f"{e}\nThe original Maschine 3 was put back. Nothing was changed.")
+        raise Abort(f"{e}\nThe original music software was put back. Nothing was changed.")
     return patches
 
 
-def restore(app, backup_dir=BACKUP_DIR, running=maschine_running, sign_app=sign):
+def restore(app, backup_dir=BACKUP_DIR, running=software_running, sign_app=sign):
     state, archs, patches, problems = read_state(app)
     if state != "patched":
-        raise Abort("Maschine 3 is not patched." if state == "original" else
-                    "This Maschine 3 is not in a known state. Nothing was changed.\n  " + "\n  ".join(problems))
+        raise Abort("The music software is not patched." if state == "original" else
+                    "This music software is not in a known state. Nothing was changed.\n  " + "\n  ".join(problems))
     if running():
-        raise Abort("Maschine 3 is open. Close it and run this again.")
+        raise Abort("The music software is open. Close it and run this again.")
     if has_backup(backup_dir):
         try:
             with open(os.path.join(backup_dir, "metadata.json")) as f:
                 meta = json.load(f)
             if meta["app"] != os.path.realpath(app) or meta["version"] != bundle_version(app) or meta["sha256"] != file_hash(os.path.join(backup_dir, PROCESS_NAME)):
-                raise Abort("Backup does not match this installation; restore it using Native Access.")
+                raise Abort("Backup does not match this installation; restore it using your software provider’s installer.")
             # Codesign changes embedded signature bytes, so compare the signed patched binary.
             if file_hash(exe_path(app)) != meta["patched_sha256"]:
-                raise Abort("Backup does not match the current executable; restore it using Native Access.")
+                raise Abort("Backup does not match the current executable; restore it using your software provider’s installer.")
         except (OSError, ValueError, KeyError) as e:
-            raise Abort(f"Backup cannot be verified: {e}. Restore using Native Access.")
+            raise Abort(f"Backup cannot be verified: {e}. Restore using your software provider’s installer.")
         load_backup(app, backup_dir)
         return "backup"
     # A missing backup cannot safely restore the original signature.
-    raise Abort("No verified backup is available. Restore Maschine 3 using Native Access.")
+    raise Abort("No verified backup is available. Restore music software using your software provider’s installer.")
 
 
 def elevate():
@@ -208,11 +208,11 @@ def main(argv):
                 if input("Do you want to enable the MK2? [y/N] ").strip().lower() not in ("y", "yes"):
                     return
             enable(app)
-            print("MK2 enabled. Connect the MK2 and open Maschine 3.\n"
-                  "If Native Access updates Maschine 3, you will need to enable it again.")
+            print("MK2 enabled. Connect the MK2 and open the music software.\n"
+                  "If your software provider’s installer updates music software, you will need to enable it again.")
         else:
             how = restore(app)
-            print("Maschine 3 is back to its factory state. The Maschine Jam works again."
+            print("The music software is back to its factory state. The Jam controller works again."
                   + (" (restored from the saved copy)" if how == "backup" else ""))
     except Abort as e:
         sys.exit(f"ERROR: {e}")
